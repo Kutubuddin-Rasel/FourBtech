@@ -4,11 +4,20 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.useGlobalPipes(new ValidationPipe());
+  const origin =
+    process.env.NODE_ENV === 'production'
+      ? process.env.FRONTEND_URL  
+      : 'http://localhost:3000';
+
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin,
     credentials: true,
   });
-  await app.listen(3001);
+
+  const port = parseInt(process.env.PORT, 10) || 3001;
+  await app.listen(port);
+  console.log(`🚀 Listening on port ${port}`);
 }
 bootstrap();
