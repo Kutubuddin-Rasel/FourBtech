@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { productService } from '@/services/productService';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -28,7 +29,7 @@ export default function SellerProductsPage() {
       setError(null);
       try {
         const fetchedProducts = await productService.getAllProducts();
-        const mappedProducts = fetchedProducts.map((p: any) => ({
+        const mappedProducts = fetchedProducts.map((p: Product) => ({
           id: p.id,
           imageUrl: p.imageUrl,
           name: p.name,
@@ -38,8 +39,17 @@ export default function SellerProductsPage() {
           status: p.stock > 10 ? 'Active' : p.stock > 0 ? 'Low stock' : 'Out of stock',
         }));
         setProducts(mappedProducts);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch products.');
+      } catch (err: unknown) {
+        let message = 'Failed to fetch products.';
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'message' in err &&
+          typeof (err as { message?: string }).message === 'string'
+        ) {
+          message = (err as { message: string }).message;
+        }
+        setError(message);
         console.error('Error fetching products:', err);
       } finally {
         setLoading(false);
@@ -53,8 +63,17 @@ export default function SellerProductsPage() {
     try {
       await productService.deleteProduct(id);
       setProducts(products.filter((p) => p.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete product.');
+    } catch (err: unknown) {
+      let message = 'Failed to delete product.';
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
       console.error('Error deleting product:', err);
     }
   };
@@ -144,7 +163,7 @@ export default function SellerProductsPage() {
               products.map((product) => (
                 <tr key={product.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <img src={product.imageUrl || '/placeholder.jpg'} alt={product.name} className="h-10 w-10 rounded-full object-cover" />
+                    <Image src={product.imageUrl || '/placeholder.jpg'} alt={product.name} width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {product.name}

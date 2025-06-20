@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function CustomerRegisterPage() {
@@ -13,7 +12,6 @@ export default function CustomerRegisterPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,8 +23,17 @@ export default function CustomerRegisterPage() {
       setSuccess('Registration successful! Please log in.');
       // Optionally, redirect after a short delay
       // setTimeout(() => router.push('/auth/login'), 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register. Please try again.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to register. Please try again.');
+      } else {
+        setError('Failed to register. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

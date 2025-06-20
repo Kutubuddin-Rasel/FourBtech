@@ -9,23 +9,18 @@ import { UserRole } from '../auth/decorators/roles.decorator';
 
 @Injectable()
 export class UsersService {
-  private readonly logger = new Logger(UsersService.name);
-
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    this.logger.debug(`Creating user: ${createUserDto.email}`);
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
-      this.logger.debug(`User already exists: ${createUserDto.email}`);
       throw new ConflictException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    this.logger.debug(`Password hashed successfully for: ${createUserDto.email}`);
     
     const user = this.usersRepository.create({
       ...createUserDto,
@@ -34,7 +29,6 @@ export class UsersService {
     });
     
     const savedUser = await this.usersRepository.save(user);
-    this.logger.debug(`User created successfully: ${savedUser.email} with role: ${savedUser.role}`);
     return savedUser;
   }
 
@@ -51,9 +45,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    this.logger.debug(`Looking up user by email: ${email}`);
     const user = await this.usersRepository.findOne({ where: { email } });
-    this.logger.debug(`User lookup result for ${email}: ${user ? 'found' : 'not found'}`);
     return user;
   }
 
@@ -74,15 +66,12 @@ export class UsersService {
   }
 
   async createSeller(createUserDto: CreateUserDto): Promise<User> {
-    this.logger.debug(`Creating seller: ${createUserDto.email}`);
     const existingUser = await this.findByEmail(createUserDto.email);
     if (existingUser) {
-      this.logger.debug(`User already exists: ${createUserDto.email}`);
       throw new ConflictException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    this.logger.debug(`Password hashed successfully for seller: ${createUserDto.email}`);
     
     const user = this.usersRepository.create({
       ...createUserDto,
@@ -91,30 +80,23 @@ export class UsersService {
     });
     
     const savedUser = await this.usersRepository.save(user);
-    this.logger.debug(`Seller created successfully: ${savedUser.email}`);
     return savedUser;
   }
 
   async validatePassword(user: User, password: string): Promise<boolean> {
-    this.logger.debug(`Validating password for user: ${user.email}`);
     try {
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      this.logger.debug(`Password validation result for ${user.email}: ${isPasswordValid}`);
       return isPasswordValid;
     } catch (error) {
-      this.logger.error(`Error validating password for ${user.email}: ${error.message}`);
       return false;
     }
   }
 
   async findById(id: string): Promise<User> {
-    this.logger.debug(`Looking up user by ID: ${id}`);
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      this.logger.debug(`User not found with ID: ${id}`);
       throw new NotFoundException('User not found');
     }
-    this.logger.debug(`User found with ID: ${id}`);
     return user;
   }
 }

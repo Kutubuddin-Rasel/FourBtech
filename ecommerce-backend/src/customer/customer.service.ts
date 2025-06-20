@@ -6,6 +6,7 @@ import { Wishlist } from '../wishlist/entities/wishlist.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { Product } from '../products/entities/product.entity';
 import { User } from '../users/entities/user.entity';
+import { Address } from './entities/address.entity';
 
 @Injectable()
 export class CustomerService {
@@ -20,6 +21,8 @@ export class CustomerService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Address)
+    private readonly addressRepository: Repository<Address>,
   ) {}
 
   async getCustomerStats(customerId: string) {
@@ -146,5 +149,50 @@ export class CustomerService {
       console.error('Error fetching customer wishlists:', error);
       throw error;
     }
+  }
+
+  async getCustomerAddresses(customerId: string) {
+    return this.addressRepository.find({ where: { user: { id: customerId } }, order: { isDefault: 'DESC', createdAt: 'DESC' } });
+  }
+
+  async addCustomerAddress(customerId: string, addressDto: { type: 'Home' | 'Work' | 'Other'; details: string; isDefault?: boolean }) {
+    const user = await this.userRepository.findOne({ where: { id: customerId } });
+    if (!user) throw new NotFoundException('User not found');
+    // If isDefault is true, unset previous default addresses
+    if (addressDto.isDefault) {
+      await this.addressRepository.update({ user: { id: customerId }, isDefault: true }, { isDefault: false });
+    }
+    const address = this.addressRepository.create({
+      ...addressDto,
+      user,
+      isDefault: !!addressDto.isDefault,
+    });
+    return this.addressRepository.save(address);
+  }
+
+  async updateCustomerAddress(customerId: string, addressId: string, addressDto: { type?: 'Home' | 'Work' | 'Other'; details?: string; isDefault?: boolean }) {
+    const address = await this.addressRepository.findOne({ where: { id: addressId, user: { id: customerId } } });
+    if (!address) throw new NotFoundException('Address not found');
+    if (addressDto.isDefault) {
+      await this.addressRepository.update({ user: { id: customerId }, isDefault: true }, { isDefault: false });
+    }
+    Object.assign(address, addressDto);
+    if (addressDto.isDefault !== undefined) address.isDefault = !!addressDto.isDefault;
+    return this.addressRepository.save(address);
+  }
+
+  async deleteCustomerAddress(customerId: string, addressId: string) {
+    const address = await this.addressRepository.findOne({ where: { id: addressId, user: { id: customerId } } });
+    if (!address) throw new NotFoundException('Address not found');
+    await this.addressRepository.remove(address);
+    return { message: 'Address deleted' };
+  }
+
+  async setDefaultCustomerAddress(customerId: string, addressId: string) {
+    const address = await this.addressRepository.findOne({ where: { id: addressId, user: { id: customerId } } });
+    if (!address) throw new NotFoundException('Address not found');
+    await this.addressRepository.update({ user: { id: customerId }, isDefault: true }, { isDefault: false });
+    address.isDefault = true;
+    return this.addressRepository.save(address);
   }
 } 

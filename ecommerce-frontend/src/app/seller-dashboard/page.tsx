@@ -39,7 +39,7 @@ export default function SellerOverviewPage() {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Welcome back, Seller!</h1>
-      <p className="text-gray-600 mb-8">You've made <span className="font-semibold text-gray-900">${isLoading ? '--' : stats.salesToday}</span> today.</p>
+      <p className="text-gray-600 mb-8">You&apos;ve made <span className="font-semibold text-gray-900">${isLoading ? '--' : stats.salesToday}</span> today.</p>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4">

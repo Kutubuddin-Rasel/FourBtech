@@ -21,7 +21,6 @@ export default function OverviewPage() {
   });
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,10 +31,8 @@ export default function OverviewPage() {
         ]);
         setStats(statsData);
         setRecentActivity(activityData);
-        setError(null);
       } catch (err) {
         console.error('Error fetching customer data:', err);
-        setError('Failed to load dashboard data. Please try again later.');
       } finally {
         setIsLoading(false);
       }

@@ -30,14 +30,23 @@ export default function LoginPage() {
       } else {
         setError('Unknown user role. Please contact support.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      if (err.message === 'Invalid credentials') {
-        setError('Invalid email or password. Please try again.');
-      } else if (err.message.includes('No response from server')) {
-        setError('Unable to connect to the server. Please check your internet connection.');
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        if ((err as { message: string }).message === 'Invalid credentials') {
+          setError('Invalid email or password. Please try again.');
+        } else if ((err as { message: string }).message.includes('No response from server')) {
+          setError('Unable to connect to the server. Please check your internet connection.');
+        } else {
+          setError((err as { message: string }).message || 'An error occurred during login. Please try again.');
+        }
       } else {
-        setError(err.message || 'An error occurred during login. Please try again.');
+        setError('An error occurred during login. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -163,7 +172,7 @@ export default function LoginPage() {
           {/* Register Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link 
                 href="/auth/register" 
                 className="font-medium text-purple-600 hover:text-purple-500 transition-colors duration-200"

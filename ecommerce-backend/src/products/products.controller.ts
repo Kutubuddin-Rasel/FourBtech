@@ -17,6 +17,7 @@ export class ProductsController {
   ) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.VENDOR)
   async create(@Body() createProductDto: CreateProductDto, @Request() req) {
     const vendor = await this.vendorsService.findOne(req.user);
@@ -34,6 +35,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.VENDOR)
   async update(
     @Param('id') id: string,
@@ -45,6 +47,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.VENDOR)
   async remove(@Param('id') id: string, @Request() req) {
     const vendor = await this.vendorsService.findOne(req.user);
@@ -52,6 +55,8 @@ export class ProductsController {
   }
 
   @Get('vendor/:vendorId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.VENDOR)
   findByVendor(@Param('vendorId') vendorId: string) {
     return this.productsService.findByVendor(vendorId);
   }

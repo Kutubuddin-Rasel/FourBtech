@@ -5,13 +5,23 @@ import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface AuthContextType {
   token: string | null;
-  user: any;
-  login: (email: string, password: string) => Promise<{ accessToken: string, user: any }>;
+  user: User | null;
+  login: (email: string, password: string) => Promise<{ accessToken: string, user: User }>;
   logout: () => void;
   isAuthenticated: () => boolean;
   register: (name: string, email: string, password: string, role: string) => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +61,8 @@ const eraseCookie = (name: string) => {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Explicitly clear old localStorage items to avoid conflicts
@@ -81,47 +92,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         eraseCookie('user');
       }
     }
+    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
       console.log('[AuthContext login] Attempting login with:', { email, API_URL });
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
-    const { accessToken, user } = response.data;
-
-    console.log('[AuthContext login] Received accessToken from backend:', accessToken);
-
-    // Store token and user data in cookies
-    setCookie('token', accessToken, 7); // Expire in 7 days
-    setCookie('user', JSON.stringify(user), 7); // Store user object as string
-    setCookie('userRole', user.role, 7); // Store user role separately for middleware
-
-    if (user.role === 'admin') {
-      setCookie('adminAuthenticated', 'true', 7); // Set adminAuthenticated cookie for admins
-    } else {
-      eraseCookie('adminAuthenticated'); // Ensure it's not set for non-admins
-    }
-    
-    // Check document.cookie immediately after setting
-    console.log('[AuthContext login] After setting cookies, document.cookie:', document.cookie);
-
-    setToken(accessToken);
-    setUser(user);
-    return { accessToken, user }; // Return the accessToken and user object
-    } catch (error: any) {
-      console.error('[AuthContext login] Error:', error);
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('[AuthContext login] Error response:', error.response.data);
-        throw new Error(error.response.data.message || 'Invalid credentials');
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('[AuthContext login] No response received:', error.request);
-        throw new Error('No response from server. Please check your connection.');
+      const { accessToken, user } = response.data;
+      console.log('[AuthContext login] Received accessToken from backend:', accessToken);
+      setCookie('token', accessToken, 7); // Expire in 7 days
+      setCookie('user', JSON.stringify(user), 7); // Store user object as string
+      setCookie('userRole', user.role, 7); // Store user role separately for middleware
+      if (user.role === 'admin') {
+        setCookie('adminAuthenticated', 'true', 7); // Set adminAuthenticated cookie for admins
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('[AuthContext login] Error setting up request:', error.message);
+        eraseCookie('adminAuthenticated'); // Ensure it's not set for non-admins
+      }
+      console.log('[AuthContext login] After setting cookies, document.cookie:', document.cookie);
+      setToken(accessToken);
+      setUser(user);
+      return { accessToken, user };
+    } catch (error: unknown) {
+      console.error('[AuthContext login] Error:', error);
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        throw new Error((error as { response: { data: { message: string } } }).response.data.message || 'Invalid credentials');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'request' in error
+      ) {
+        throw new Error('No response from server. Please check your connection.');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as { message?: string }).message === 'string'
+      ) {
+        throw new Error((error as { message: string }).message || 'Failed to make request. Please try again.');
+      } else {
         throw new Error('Failed to make request. Please try again.');
       }
     }
@@ -132,9 +146,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[AuthContext register] Attempting registration with:', { name, email, role, API_URL });
       const response = await axios.post(`${API_URL}/auth/register`, { name, email, password, role });
       console.log('[AuthContext register] Registration successful:', response.data);
-    } catch (error: any) {
-      console.error('[AuthContext register] Error:', error.response?.data || error.message);
-      throw error;
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        throw new Error((error as { response: { data: { message: string } } }).response.data.message || 'Failed to register. Please try again.');
+      } else if (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        typeof (error as { message?: string }).message === 'string'
+      ) {
+        throw new Error((error as { message: string }).message || 'Failed to register. Please try again.');
+      } else {
+        throw new Error('Failed to register. Please try again.');
+      }
     }
   };
 
@@ -152,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated, register }}>
+    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated, register, loading }}>
       {children}
     </AuthContext.Provider>
   );

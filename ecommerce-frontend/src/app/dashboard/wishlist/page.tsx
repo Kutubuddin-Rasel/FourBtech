@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { customerApi } from '@/services/api';
+import Image from 'next/image';
 
 interface Wishlist {
   id: string;
@@ -28,8 +29,8 @@ export default function WishlistPage() {
         const data = await customerApi.getWishlists();
         setWishlists(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch wishlists');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch wishlists');
         console.error('Error fetching wishlists:', err);
       } finally {
         setLoading(false);
@@ -73,9 +74,11 @@ export default function WishlistPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {wishlist.items.map((item) => (
                       <div key={item.id} className="border rounded-lg overflow-hidden">
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.name}
+                          width={400}
+                          height={192}
                           className="w-full h-48 object-cover"
                         />
                         <div className="p-4">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { customerApi } from '@/services/api';
+import Image from 'next/image';
 
 interface CartItem {
   id: string;
@@ -60,8 +61,17 @@ export default function CheckoutPage() {
     try {
       const data = await customerApi.getCart();
       setCartItems(data);
-    } catch (err: any) {
-      setError('Failed to fetch cart items.');
+    } catch (err: unknown) {
+      let message = 'Failed to fetch cart items.';
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
     }
   };
 
@@ -71,8 +81,17 @@ export default function CheckoutPage() {
       setAddresses(data);
       const defaultAddr = data.find((a: Address) => a.isDefault);
       if (defaultAddr) setSelectedAddressId(defaultAddr.id);
-    } catch (err: any) {
-      setError('Failed to fetch addresses.');
+    } catch (err: unknown) {
+      let message = 'Failed to fetch addresses.';
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
     }
   };
 
@@ -90,15 +109,24 @@ export default function CheckoutPage() {
     try {
       const details = `${addressForm.fullName}, ${addressForm.phoneNumber}, ${addressForm.email}, ${addressForm.addressLine1}, ${addressForm.addressLine2}, ${addressForm.city}, ${addressForm.state}, ${addressForm.zip}, ${addressForm.country}`;
       const newAddr = await customerApi.addAddress({
-        type: addressForm.type,
+        type: addressForm.type as 'Home' | 'Work' | 'Other',
         details,
         isDefault: addressForm.isDefault,
       });
       setAddresses([...addresses, newAddr]);
       setSelectedAddressId(newAddr.id);
       setShowNewAddress(false);
-    } catch (err: any) {
-      setError('Failed to add address.');
+    } catch (err: unknown) {
+      let message = 'Failed to add address.';
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
     }
   };
 
@@ -135,8 +163,17 @@ export default function CheckoutPage() {
       });
       setSuccess('Order placed successfully!');
       router.push('/dashboard/my-orders');
-    } catch (err: any) {
-      setError('Failed to place order.');
+    } catch (err: unknown) {
+      let message = 'Failed to place order.';
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        message = (err as { message: string }).message;
+      }
+      setError(message);
     } finally {
       setPlacingOrder(false);
     }
@@ -277,7 +314,7 @@ export default function CheckoutPage() {
                   <div key={item.id} className="flex items-center space-x-4 border-b pb-4 last:border-b-0">
                     <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
                       {item.product.imageUrl ? (
-                        <img src={item.product.imageUrl} alt={item.product.name} className="object-cover w-full h-full" />
+                        <Image src={item.product.imageUrl} alt={item.product.name} width={64} height={64} className="object-cover w-full h-full" />
                       ) : (
                         <span className="text-gray-400">No Image</span>
                       )}
@@ -287,7 +324,7 @@ export default function CheckoutPage() {
                       <div className="text-xs text-gray-500 truncate">{item.product.description || ''}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-gray-900">${item.product.price.toFixed(2)}</div>
+                      <div className="font-semibold text-gray-900">{item.product.price !== undefined && item.product.price !== null ? `$${Number(item.product.price).toFixed(2)}` : '--'}</div>
                       <div className="text-xs text-gray-500">Quantity: {item.quantity}</div>
                     </div>
                   </div>

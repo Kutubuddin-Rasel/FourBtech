@@ -7,10 +7,11 @@ import { Wishlist } from '../wishlist/entities/wishlist.entity';
 import { Review } from '../reviews/entities/review.entity';
 import { Product } from '../products/entities/product.entity';
 import { User } from '../users/entities/user.entity';
+import { Address } from './entities/address.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, Wishlist, Review, Product, User]),
+    TypeOrmModule.forFeature([Order, Wishlist, Review, Product, User, Address]),
   ],
   controllers: [CustomerController],
   providers: [CustomerService],

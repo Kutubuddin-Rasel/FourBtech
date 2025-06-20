@@ -20,8 +20,17 @@ export default function CustomerLoginPage() {
     try {
       await login(email, password);
       router.push('/dashboard/overview'); // Redirect to customer dashboard after successful login
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to log in. Please check your credentials.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to log in. Please check your credentials.');
+      } else {
+        setError('Failed to log in. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
@@ -89,7 +98,7 @@ export default function CustomerLoginPage() {
           </Link>
         </div>
         <div className="text-sm text-center mt-4">
-          Don't have an account? {' '}
+          Don&apos;t have an account? {' '}
           <Link href="/auth/register" className="font-medium text-purple-600 hover:text-purple-500">
             Register here
           </Link>

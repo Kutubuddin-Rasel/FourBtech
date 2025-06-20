@@ -12,7 +12,7 @@ interface Transaction {
 }
 
 export default function TransactionsTab() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]); // This will be populated from the database
+  const [transactions] = useState<Transaction[]>([]); // This will be populated from the database
 
   const handleDownloadReceipt = (id: string) => {
     // TODO: Implement logic to download receipt

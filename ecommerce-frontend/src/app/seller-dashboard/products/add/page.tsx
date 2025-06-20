@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { productService } from '@/services/productService';
 import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
 export default function AddNewProductPage() {
   const { token } = useAuth();
@@ -86,17 +87,27 @@ export default function AddNewProductPage() {
       imageUrl: productImages.length > 0 ? URL.createObjectURL(productImages[0]) : undefined, // Assuming first image for now
       specifications: specifications.length > 0 ? specifications : undefined,
       tags: tags.length > 0 ? tags : undefined,
+      sku: formData.sku || 'N/A',
       // sku, salePrice, seoTitle, seoDescription are not in CreateProductDto directly but can be added to the backend DTO if needed
     };
 
     try {
-      const response = await productService.createProduct(productData, token);
+      const response = await productService.createProduct(productData);
       setSuccess('Product added successfully!');
       console.log('Product created:', response);
       // Optionally redirect to products list or clear form
       // router.push('/seller-dashboard/products');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add product.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to add product.');
+      } else {
+        setError('Failed to add product.');
+      }
       console.error('Error adding product:', err);
     } finally {
       setLoading(false);
@@ -156,7 +167,7 @@ export default function AddNewProductPage() {
             </label>
             <div className="mt-4 flex flex-wrap justify-center gap-4">
               {productImages.map((file, index) => (
-                <img key={index} src={URL.createObjectURL(file)} alt={`Product Image ${index + 1}`} className="w-24 h-24 object-cover rounded-md border border-gray-200" />
+                <Image key={index} src={URL.createObjectURL(file)} alt={`Product Image ${index + 1}`} width={96} height={96} className="w-24 h-24 object-cover rounded-md border border-gray-200" />
               ))}
             </div>
           </div>

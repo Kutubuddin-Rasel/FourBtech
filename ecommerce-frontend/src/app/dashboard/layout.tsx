@@ -16,6 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navItems = [
     { href: '/dashboard', label: 'Overview' },
+    { href: '/dashboard/products', label: 'Products' },
     { href: '/dashboard/cart', label: 'Cart' },
     { href: '/dashboard/my-orders', label: 'My Orders' },
     { href: '/dashboard/wishlist', label: 'Wishlist' },

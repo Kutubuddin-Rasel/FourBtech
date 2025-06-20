@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { customerApi } from '@/services/api';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface CartItem {
   id: string;
@@ -20,6 +22,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const router = useRouter();
 
   useEffect(() => {
     fetchCart();
@@ -31,8 +34,8 @@ export default function CartPage() {
       setError(null);
       const data = await customerApi.getCart();
       setCartItems(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch cart items');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch cart items');
       console.error('Error fetching cart:', err);
     } finally {
       setLoading(false);
@@ -46,8 +49,8 @@ export default function CartPage() {
       setUpdatingItems(prev => new Set(prev).add(cartItemId));
       await customerApi.updateCartItem(cartItemId, newQuantity);
       await fetchCart(); // Refresh cart data
-    } catch (err: any) {
-      setError(err.message || 'Failed to update quantity');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update quantity');
       console.error('Error updating quantity:', err);
     } finally {
       setUpdatingItems(prev => {
@@ -62,8 +65,8 @@ export default function CartPage() {
     try {
       await customerApi.removeFromCart(cartItemId);
       await fetchCart(); // Refresh cart data
-    } catch (err: any) {
-      setError(err.message || 'Failed to remove item');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to remove item');
       console.error('Error removing item:', err);
     }
   };
@@ -74,8 +77,8 @@ export default function CartPage() {
     try {
       await customerApi.clearCart();
       setCartItems([]);
-    } catch (err: any) {
-      setError(err.message || 'Failed to clear cart');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to clear cart');
       console.error('Error clearing cart:', err);
     }
   };
@@ -140,7 +143,7 @@ export default function CartPage() {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
-          <p className="text-gray-600 mb-6">Looks like you haven't added any items to your cart yet.</p>
+          <p className="text-gray-600 mb-6">Looks like you haven&apos;t added any items to your cart yet.</p>
           <button className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition-colors">
             Start Shopping
           </button>
@@ -156,9 +159,11 @@ export default function CartPage() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
                       <div className="flex-shrink-0">
-                        <img
+                        <Image
                           src={item.product.imageUrl || '/placeholder-product.jpg'}
                           alt={item.product.name}
+                          width={80}
+                          height={80}
                           className="w-20 h-20 object-cover rounded-md"
                         />
                       </div>
@@ -168,7 +173,7 @@ export default function CartPage() {
                         </h3>
                         <p className="text-sm text-gray-500">Stock: {item.product.stock}</p>
                         <p className="text-lg font-semibold text-purple-600">
-                          ${item.product.price.toFixed(2)}
+                          {item.product.price !== undefined && item.product.price !== null ? `$${Number(item.product.price).toFixed(2)}` : '--'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -192,7 +197,7 @@ export default function CartPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                          {item.product.price !== undefined && item.product.price !== null ? `$${(Number(item.product.price) * item.quantity).toFixed(2)}` : '--'}
                         </p>
                         <button
                           onClick={() => removeItem(item.id)}
@@ -232,7 +237,10 @@ export default function CartPage() {
                   </div>
                 </div>
               </div>
-              <button className="w-full bg-purple-600 text-white py-3 px-4 rounded-md font-medium hover:bg-purple-700 transition-colors mt-6">
+              <button
+                className="w-full bg-purple-600 text-white py-3 px-4 rounded-md font-medium hover:bg-purple-700 transition-colors mt-6"
+                onClick={() => router.push('/dashboard/checkout')}
+              >
                 Proceed to Checkout
               </button>
             </div>

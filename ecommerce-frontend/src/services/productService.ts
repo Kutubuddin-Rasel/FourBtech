@@ -1,7 +1,16 @@
 import api from './api';
 
+interface Product {
+  id: string;
+  imageUrl?: string;
+  name: string;
+  sku: string;
+  price: number;
+  stock: number;
+}
+
 export const productService = {
-  createProduct: async (productData: any) => {
+  createProduct: async (productData: Omit<Product, 'id'>) => {
     try {
       const response = await api.post('/seller/products', productData);
       return response.data;
@@ -31,7 +40,7 @@ export const productService = {
     }
   },
 
-  updateProduct: async (id: string, productData: any) => {
+  updateProduct: async (id: string, productData: Partial<Product>) => {
     try {
       const response = await api.patch(`/seller/products/${id}`, productData);
       return response.data;

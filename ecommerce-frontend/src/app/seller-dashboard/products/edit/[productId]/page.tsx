@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { productService } from '@/services/productService';
 import { useAuth } from '@/contexts/AuthContext';
+import Image from 'next/image';
 
 interface Specification {
   name: string;
@@ -49,7 +50,7 @@ export default function EditProductPage() {
         return;
       }
       try {
-        const product = await productService.getProductById(productId as string, token);
+        const product = await productService.getProductById(productId as string);
         setFormData({
           productTitle: product.name,
           description: product.description,
@@ -69,8 +70,17 @@ export default function EditProductPage() {
           seoTitle: product.seoTitle || '',
           seoDescription: product.seoDescription || '',
         });
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to fetch product details.');
+      } catch (err: unknown) {
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        ) {
+          setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to fetch product details.');
+        } else {
+          setError('Failed to fetch product details.');
+        }
       }
     };
 
@@ -135,11 +145,20 @@ export default function EditProductPage() {
     };
 
     try {
-      const response = await productService.updateProduct(productId as string, productData, token);
+      const response = await productService.updateProduct(productId as string, productData);
       setSuccess('Product updated successfully!');
       console.log('Product updated:', response);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update product.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to update product.');
+      } else {
+        setError('Failed to update product.');
+      }
       console.error('Error updating product:', err);
     } finally {
       setLoading(false);
@@ -199,7 +218,7 @@ export default function EditProductPage() {
             </label>
             <div className="mt-4 flex flex-wrap justify-center gap-4">
               {productImages.map((file, index) => (
-                <img key={index} src={URL.createObjectURL(file)} alt={`Product Image ${index + 1}`} className="w-24 h-24 object-cover rounded-md border border-gray-200" />
+                <Image key={index} src={URL.createObjectURL(file)} alt={`Product Image ${index + 1}`} width={96} height={96} className="w-24 h-24 object-cover rounded-md border border-gray-200" />
               ))}
             </div>
           </div>

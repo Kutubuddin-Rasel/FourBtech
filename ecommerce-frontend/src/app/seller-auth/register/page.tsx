@@ -43,10 +43,19 @@ export default function SellerRegisterPage() {
       setSuccess('Seller registered successfully! The seller can now log in from the main login page.');
       // Redirect to admin dashboard after a short delay
       setTimeout(() => {
-        router.push('/admin');
+        router.push('/admin-dashboard/overview');
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register seller. Please try again.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+      ) {
+        setError((err as { response: { data: { message: string } } }).response.data.message || 'Failed to register seller. Please try again.');
+      } else {
+        setError('Failed to register seller. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

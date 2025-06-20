@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { sellerApi } from '@/services/api';
+import Image from 'next/image';
 
 interface OrderDetail {
   orderId: string;
@@ -46,8 +47,8 @@ export default function OrderDetailsPage() {
         const data = await sellerApi.getOrderDetails(orderId);
         setOrderDetails(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch order details');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch order details');
         console.error('Error fetching order details:', err);
       } finally {
         setLoading(false);
@@ -106,9 +107,11 @@ export default function OrderDetailsPage() {
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-4">Product Information</h3>
               <div className="flex items-start space-x-4">
-                <img
+                <Image
                   src={orderDetails.productImage}
                   alt={orderDetails.productName}
+                  width={96}
+                  height={96}
                   className="w-24 h-24 object-cover rounded-lg"
                 />
                 <div>

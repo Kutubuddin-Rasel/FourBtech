@@ -27,6 +27,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Input type for creating/updating address (without id)
+interface AddressCreateInput {
+  type: 'Home' | 'Work' | 'Other';
+  details: string;
+  isDefault: boolean;
+}
+
 export const adminApi = {
   getStats: () => api.get('/admin/stats').then(res => res.data),
   getUsers: () => api.get('/users').then(res => res.data),
@@ -52,8 +59,8 @@ export const customerApi = {
   clearCart: () => api.delete('/cart').then(res => res.data),
   // Address methods (assuming RESTful endpoints)
   getAddresses: () => api.get('/customer/addresses').then(res => res.data),
-  addAddress: (address: any) => api.post('/customer/addresses', address).then(res => res.data),
-  updateAddress: (id: string, address: any) => api.patch(`/customer/addresses/${id}`, address).then(res => res.data),
+  addAddress: (address: AddressCreateInput) => api.post('/customer/addresses', address).then(res => res.data),
+  updateAddress: (id: string, address: AddressCreateInput) => api.patch(`/customer/addresses/${id}`, address).then(res => res.data),
   deleteAddress: (id: string) => api.delete(`/customer/addresses/${id}`).then(res => res.data),
   // Order methods
   placeOrder: (order: { shippingAddress: string, paymentMethod: string }) => api.post('/orders', order).then(res => res.data),
